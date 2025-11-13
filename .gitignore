@@ -213,6 +213,6 @@ charts/
 
 ict_scripts/
 
-backtest.ipynb
+analysis.ipynb
 
 *.bak

@@ -291,32 +291,63 @@ class ICTDemoBot:
             return False
     
     def get_current_price(self, symbol):
-        """Get current bid/ask price"""
+        """Get current bid/ask price with intelligent symbol selection"""
         try:
-            if not mt5.symbol_select(symbol, True):
-                print(f"❌ Cannot select symbol: {symbol}")
-                return None
-                
-            tick = mt5.symbol_info_tick(symbol)
-            if tick and tick.bid > 0 and tick.ask > 0:
-                return (tick.bid + tick.ask) / 2
-        except:
-            pass
-        return None
+            # Try the symbol as-is first
+            if mt5.symbol_select(symbol, True):
+                tick = mt5.symbol_info_tick(symbol)
+                if tick and tick.bid > 0 and tick.ask > 0:
+                    return (tick.bid + tick.ask) / 2
+            
+            # If that fails, try common variations
+            variations = self._get_symbol_variations(symbol)
+            for variation in variations:
+                if mt5.symbol_select(variation, True):
+                    tick = mt5.symbol_info_tick(variation)
+                    if tick and tick.bid > 0 and tick.ask > 0:
+                        print(f"   🔄 Using variation: {variation}")
+                        return (tick.bid + tick.ask) / 2
+                        
+            print(f"❌ Cannot select symbol: {symbol} (tried variations)")
+            return None
+            
+        except Exception as e:
+            print(f"❌ Error getting price for {symbol}: {e}")
+            return None
+
+    def _get_symbol_variations(self, symbol):
+        """Generate common symbol variations for different brokers"""
+        base_pairs = ['USDJPY', 'EURJPY', 'GBPJPY', 'AUDJPY', 'CADJPY', 'CHFJPY', 'NZDJPY']
+        
+        # Remove any suffix to get base pair
+        base_symbol = symbol
+        for pair in base_pairs:
+            if pair in symbol:
+                base_symbol = pair
+                break
+        
+        # Common suffix patterns across brokers
+        suffixes = ['', 'm', '.a', '.x', 'micro', 'mini', 'pro', 'cfd']
+        
+        variations = []
+        for suffix in suffixes:
+            variations.append(base_symbol + suffix)
+        
+        return variations
     
     def scan_and_trade_ict(self):
-        """Scan for signals and execute PROPER ICT trades using auto-detected pairs"""
+        """Scan for signals and execute PROPER ICT trades using SMART major pair detection"""
         print("🔍 Scanning for ICT signals...")
         
-        # ✅ USE AUTO-DETECTED PAIRS INSTEAD OF HARDCODED
-        if not self.available_pairs:
-            print("❌ No pairs available for trading")
+        # ✅ USE SMART MAJOR PAIR DETECTION (BROKER AGNOSTIC)
+        from utils.broker_helper import get_major_jpy_pairs
+        trading_pairs = get_major_jpy_pairs()
+        
+        if not trading_pairs:
+            print("❌ No major JPY pairs available for trading")
             return
             
-        # Use first 2 detected pairs (or all if less than 2)
-        trading_pairs = self.available_pairs[:min(2, len(self.available_pairs))]
-        
-        print(f"🎯 Trading pairs: {trading_pairs}")
+        print(f"🎯 Trading SMART major JPY pairs: {trading_pairs}")
         
         for symbol in trading_pairs:
             try:

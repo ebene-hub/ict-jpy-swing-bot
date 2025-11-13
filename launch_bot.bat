@@ -9,7 +9,7 @@ echo ========================================
 echo.
 
 :: Set paths
-set VENV_PATH=C:\Users\Bamidele\Documents\trading_ai\ict_swing_ai\ict
+set VENV_PATH=C:\Users\Bamidele\Documents\trading_ai\ict_swing_ai\ict_swing_trading_bot\ict_scripts
 set PROJECT_PATH=C:\Users\Bamidele\Documents\trading_ai\ict_swing_ai\ict_jpy_swing_trader
 set BOT_SCRIPT=live\live_demo_bot.py
 
